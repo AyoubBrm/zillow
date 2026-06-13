@@ -82,31 +82,28 @@ DATABASES = {
     }
 }
 
-# Redis Cache
-if config('REDIS_URL', default=None):
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': config('REDIS_URL'),
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'CONNECTION_POOL_KWARGS': {
-                    'socket_connect_timeout': 5,
-                    'socket_timeout': 5,
-                    'retry_on_timeout': True,
-                },
-                'IGNORE_EXCEPTIONS': True,  # Ignore Redis errors, fallback to dummy cache
-            }
-        }
+CACHES = {
+    "default": {
+        "BACKEND": config(
+            "CACHE_BACKEND",
+            default="django.core.cache.backends.dummy.DummyCache"
+        ),
     }
-else:
-    # Use DummyCache in production/Vercel (no-op cache that doesn't try to connect)
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
+}
 
+if CACHES["default"]["BACKEND"] == "django_redis.cache.RedisCache":
+    CACHES["default"].update({
+        "LOCATION": config("REDIS_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+                "socket_connect_timeout": 5,
+                "socket_timeout": 5,
+                "retry_on_timeout": True,
+            },
+            "IGNORE_EXCEPTIONS": True,
+        }
+    })
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
