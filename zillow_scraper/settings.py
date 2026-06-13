@@ -166,18 +166,6 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [],
 }
 
-# Celery settings
-if config('CELERY_BROKER_URL', default=None):
-    CELERY_BROKER_URL = config('CELERY_BROKER_URL')
-    CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default=CELERY_BROKER_URL)
-else:
-    CELERY_BROKER_URL = 'memory://'
-    CELERY_RESULT_BACKEND = 'cache+memory://'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-
 ## Scraper settings
 SCRAPER_SETTINGS = {
     'PROXIES': config('PROXIES', default='', cast=Csv()),
