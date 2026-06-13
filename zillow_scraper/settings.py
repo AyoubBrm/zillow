@@ -91,19 +91,7 @@ CACHES = {
     }
 }
 
-if CACHES["default"]["BACKEND"] == "django_redis.cache.RedisCache":
-    CACHES["default"].update({
-        "LOCATION": config("REDIS_URL"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_KWARGS": {
-                "socket_connect_timeout": 5,
-                "socket_timeout": 5,
-                "retry_on_timeout": True,
-            },
-            "IGNORE_EXCEPTIONS": True,
-        }
-    })
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

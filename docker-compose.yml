@@ -15,17 +15,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6381:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   web:
     build: .
@@ -37,39 +26,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     env_file:
       - .env
     environment:
       - DEBUG=True
 
-  celery:
-    build: .
-    command: celery -A zillow_scraper worker --loglevel=info
-    volumes:
-      - .:/app
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    env_file:
-      - .env
-
-  celery-beat:
-    build: .
-    command: celery -A zillow_scraper beat --loglevel=info
-    volumes:
-      - .:/app
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    env_file:
-      - .env
 
 volumes:
   postgres_data:
-  redis_data:
