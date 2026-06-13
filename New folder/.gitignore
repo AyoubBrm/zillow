@@ -1,0 +1,67 @@
+# ─── Dependencies ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# ─── Environment ─────────────────────────────────────────
+.env
+.env.local
+.env.production
+
+# ─── IDE ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ─── OS Files ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Docker ──────────────────────────────────────────────
+# Don't ignore docker-compose files
+
+# ─── Node / Frontend ────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.cache/
+*.tsbuildinfo
+
+# ─── Database ────────────────────────────────────────────
+*.sqlite3
+*.db
+
+# ─── Logs ────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Testing ─────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# ─── Uploads ─────────────────────────────────────────────
+uploads/
+tmp/
+
+# ─── Secrets ─────────────────────────────────────────────
+*.pem
+*.key
+*.cert
