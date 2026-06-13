@@ -17,7 +17,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='*.vercel.app,localhost,127.0.0.1',
+    default='zillow-ayoubbrms-projects.vercel.app,localhost,127.0.0.1',
     cast=Csv()
 )
 
