@@ -10,6 +10,8 @@ from rest_framework import status
 from api.serializers import AgentSerializer, PropertySerializer, ReviewSerializer
 from core.proxy_manager import ProxyManager
 from core.user_agent_manager import UserAgentManager
+from scrapers.base import BaseScraper
+from curl_cffi.requests.errors import RequestsError
 
 
 class SerializerTests(TestCase):
@@ -79,6 +81,19 @@ class ProxyManagerTests(TestCase):
         self.assertIsNotNone(proxy)
         self.assertEqual(proxy['http'], 'http://proxy1:8080')
         self.assertEqual(proxy['https'], 'http://proxy1:8080')
+
+    @patch('core.proxy_manager.settings')
+    def test_failed_proxy_is_temporarily_bypassed(self, mock_settings):
+        """A failed proxy must not keep all endpoints unavailable."""
+        mock_settings.SCRAPER_SETTINGS = {
+            'PROXIES': ['http://proxy1:8080'],
+            'PROXY_FALLBACK_DIRECT': True,
+            'PROXY_FAILURE_COOLDOWN': 60,
+        }
+        manager = ProxyManager()
+        self.assertIsNotNone(manager.get_proxy())
+        manager.mark_proxy_failed('http://proxy1:8080')
+        self.assertIsNone(manager.get_proxy())
 
 
 class UserAgentManagerTests(TestCase):
@@ -175,3 +190,25 @@ class APIEndpointTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status_code'], 400)
+
+
+class ProxyFallbackTests(TestCase):
+    """Regression tests for CONNECT tunnel/authentication failures."""
+
+    @patch('scrapers.base.session_pool')
+    @patch('scrapers.base.proxy_manager')
+    def test_request_retries_without_proxy_after_407(self, mock_proxy_manager, mock_pool):
+        proxy = {'http': 'http://proxy:8080', 'https': 'http://proxy:8080'}
+        mock_proxy_manager.get_proxy.side_effect = [proxy, None]
+        session = MagicMock()
+        session.request.side_effect = [
+            RequestsError('curl: (56) CONNECT tunnel failed, response 407'),
+            MagicMock(status_code=200, content=b'ok', text='ok', raise_for_status=lambda: None),
+        ]
+        mock_pool.get_session.return_value = session
+
+        response = BaseScraper().get('https://www.zillow.com/homes/123456/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(session.request.call_args_list[0].kwargs['proxies'], proxy)
+        self.assertIsNone(session.request.call_args_list[1].kwargs['proxies'])

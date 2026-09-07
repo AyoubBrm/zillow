@@ -180,6 +180,7 @@ class BaseScraper:
         params: Optional[Dict] = None,
         data: Optional[Dict] = None,
         json_data: Optional[Dict] = None,
+        headers: Optional[Dict[str, str]] = None,
         use_proxy: bool = True,
         retry_count: int = 0,
     ) -> requests.Response:
@@ -214,6 +215,7 @@ class BaseScraper:
                 params=params,
                 data=data,
                 json=json_data,
+                headers={**self._get_headers(), **(headers or {})},
                 proxies=proxies,
                 timeout=self.timeout,
                 impersonate="chrome"
@@ -238,9 +240,22 @@ class BaseScraper:
             return response
             
         except (RequestsError, BlockedException) as e:
-            # Mark proxy as failed
-            if proxies:
+            # Only transport failures indicate a dead/invalid proxy. A 403 or
+            # 429 is a Zillow response and should retain the normal proxy
+            # retry/session invalidation behavior.
+            if proxies and isinstance(e, RequestsError):
                 proxy_manager.mark_proxy_failed(proxies.get('http', ''))
+
+            # curl-cffi reports invalid proxy credentials and CONNECT 407s as
+            # RequestsError.  The proxy manager now disables that proxy for a
+            # short cooldown, so the next retry is made directly when enabled.
+            # This is important because one dead proxy must not break every
+            # endpoint in the API.
+            if proxies and isinstance(e, RequestsError) and retry_count == 0:
+                logger.warning(
+                    "Proxy connection failed for %s; retrying without proxy",
+                    url,
+                )
             
             # On repeated blocks, invalidate the session to force re-warm
             if retry_count >= 2:
@@ -256,6 +271,7 @@ class BaseScraper:
                     params=params,
                     data=data,
                     json_data=json_data,
+                    headers=headers,
                     use_proxy=use_proxy,
                     retry_count=retry_count + 1,
                 )
@@ -267,21 +283,26 @@ class BaseScraper:
         self,
         url: str,
         params: Optional[Dict] = None,
+        headers: Optional[Dict[str, str]] = None,
         use_proxy: bool = True,
     ) -> requests.Response:
         """Make a GET request."""
-        return self._make_request(url, 'GET', params=params, use_proxy=use_proxy)
+        return self._make_request(
+            url, 'GET', params=params, headers=headers, use_proxy=use_proxy
+        )
     
     def post(
         self,
         url: str,
         data: Optional[Dict] = None,
         json_data: Optional[Dict] = None,
+        headers: Optional[Dict[str, str]] = None,
         use_proxy: bool = True,
     ) -> requests.Response:
         """Make a POST request."""
         return self._make_request(
-            url, 'POST', data=data, json_data=json_data, use_proxy=use_proxy
+            url, 'POST', data=data, json_data=json_data, headers=headers,
+            use_proxy=use_proxy
         )
     
     def get_soup(

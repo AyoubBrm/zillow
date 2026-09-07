@@ -920,14 +920,12 @@ class PropertyScraper(BaseScraper):
         }
         
         try:
-            import requests
-            
-            # Make direct request with proper headers
-            response = requests.post(
+            # Use the shared request path so proxy failures can fall back to a
+            # direct connection just like the other Zillow endpoints.
+            response = self.post(
                 url,
-                json=payload,
-                headers={**self._get_headers(), **headers},
-                timeout=self.timeout
+                json_data=payload,
+                headers=headers,
             )
             
             if response.status_code != 200:

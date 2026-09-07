@@ -162,6 +162,9 @@ SCRAPER_SETTINGS = {
     'REQUEST_DELAY_MAX': config('REQUEST_DELAY_MAX', default=0, cast=float),
     'REQUEST_TIMEOUT': config('REQUEST_TIMEOUT', default=30, cast=int),
     'MAX_RETRIES': config('MAX_RETRIES', default=10, cast=int),
+    # A stale/invalid proxy should not make every endpoint return 503.
+    'PROXY_FALLBACK_DIRECT': config('PROXY_FALLBACK_DIRECT', default=True, cast=bool),
+    'PROXY_FAILURE_COOLDOWN': config('PROXY_FAILURE_COOLDOWN', default=0.5, cast=float),
 }
 
 # Logging
